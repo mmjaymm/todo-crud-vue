@@ -23,5 +23,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('v1')->group(function () {
     Route::controller(TaskController::class)->prefix('tasks')->group(function () {
         Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::get('/{id}', 'show');
+        Route::delete('/{id}', 'destroy');
+        Route::put('/{id}/update', 'update');
     });
 });
