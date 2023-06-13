@@ -1,26 +1,16 @@
 <script setup>
-    import { onMounted, ref } from "vue";
+    import { onMounted, ref, defineEmits } from "vue";
 
-    let tasks = ref([])
-
-    onMounted(async () => {
-        getTasks()
+    let props = defineProps({
+        tasks: Object
     })
 
-    const getTasks = async () => {
-        let response = await axios.get('/api/v1/tasks');
-        tasks.value = response.data.data;
-        console.log(tasks.value)
+    const emits = defineEmits(['handleDeleteTask']);
+
+    const deleteSelectedTask = async (id) => {
+        emits('handleDeleteTask', id);
     }
 
-    const deleteTask = async (id) => {
-        await axios.delete(`/api/v1/tasks/${id}`)
-        .then(response => {
-            console.log(response.data)
-            tasks.value = tasks.value.filter(task => task.id != id);
-        })
-        .catch(err => console.error(err))
-    }
 </script>
 
 <template>
@@ -62,7 +52,7 @@
                         <button
                             type="button"
                             class="btn btn-danger"
-                            @click="deleteTask(task.id)"
+                            @click="deleteSelectedTask(task.id)"
                         >
                             <i class="bi bi-trash"></i>
                         </button>
