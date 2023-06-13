@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskResource;
 use App\Repositories\Task\TaskInterface;
+use App\Services\TaskService;
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\Response as HttpResponseCode;
 
 class TaskController extends Controller
@@ -44,13 +44,10 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        $requestData = $request->all();
+        $requestData = (new TaskService())->uploadAttachment($request);
 
-        if ($request->hasFile('attachment')) {
-            $attachment = $request->file('attachment');
-            $filename = Carbon::parse(now())->timestamp; //UTC
-            $pathfile = $attachment->storeAs('attachments', $filename . '.' . $attachment->getClientOriginalExtension());
-            $requestData['attachment'] = $pathfile;
+        if (!$requestData) {
+            return $this->errorResponse(422, "Unable to upload the file!");
         }
 
         try {
@@ -90,8 +87,15 @@ class TaskController extends Controller
      */
     public function update(Request $request, int $id)
     {
+        $request->request->remove('_method');
+        $requestData = (new TaskService())->uploadAttachment($request);
+
+        if (!$requestData) {
+            return $this->errorResponse(422, "Unable to upload the file!");
+        }
+
         try {
-            $isUpdated = $this->todo->updateTask($request->all(), $id);
+            $isUpdated = $this->todo->updateTask($requestData, $id);
             return $this->successResponse($isUpdated, "Task successfully Updated!", HttpResponseCode::HTTP_OK);
         } catch (\Exception $ex) {
             return $this->errorResponse($ex->getCode(), $ex->getMessage());

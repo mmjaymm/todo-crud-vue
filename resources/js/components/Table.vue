@@ -12,6 +12,15 @@
         tasks.value = response.data.data;
         console.log(tasks.value)
     }
+
+    const deleteTask = async (id) => {
+        await axios.delete(`/api/v1/tasks/${id}`)
+        .then(response => {
+            console.log(response.data)
+            tasks.value = tasks.value.filter(task => task.id != id);
+        })
+        .catch(err => console.error(err))
+    }
 </script>
 
 <template>
@@ -41,14 +50,19 @@
                 <td>{{task.created_at}}</td>
                 <td>
                     <div class="btn-group">
-                        <button
+                        <router-link
                             class="btn btn-info"
+                            :to="{
+                                name : 'update-task',
+                                params: {id: task.id}
+                                }"
                         >
                             <i class="bi bi-pencil-square"></i>
-                        </button>
+                        </router-link>
                         <button
                             type="button"
                             class="btn btn-danger"
+                            @click="deleteTask(task.id)"
                         >
                             <i class="bi bi-trash"></i>
                         </button>
