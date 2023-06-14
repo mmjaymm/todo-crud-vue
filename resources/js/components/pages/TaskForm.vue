@@ -1,6 +1,6 @@
 <script setup>
-    import { onMounted, ref } from "vue";
-    import {useRoute, useRouter} from "vue-router";
+    import { onMounted, ref, reactive } from "vue";
+    import { useRoute, useRouter} from "vue-router";
 
     const router = useRouter();
     const route = useRoute();
@@ -22,11 +22,28 @@
         task: '',
         descriptions: '',
         attachment: null,
-        status: ''
+        status: '',
     })
 
-    const insertTask = async (e) => {
+    const formField = reactive({
+      validated: false,
+      hasAttachment: false,
+      errors: {
+        subject: '',
+        descriptions: '',
+        task: '',
+        attachment: '',
+        status: ''
+      }
+    });
+
+    const submitTask = async (e) => {
         const formData = new FormData(e.target);
+        validateForm()
+
+        if (!formField.validated || !formField.hasAttachment) {
+            return;
+        }
         // const file = fileInput.value.files[0];
         // formData.append('file', file);
 
@@ -59,36 +76,125 @@
         .catch(err => console.error(err))
     }
 
+    const validateForm = () => {
+
+        formField.validated = (!task.subject || !task.task || !task.descriptions || !task.status || formField.hasAttachment) ? true : false;
+
+        if(!task.subject) {
+            formField.errors.subject = "Subject is required!"
+        }
+
+        if(!task.task) {
+            formField.errors.task = "Task Name is required!"
+        }
+
+        if(!task.descriptions) {
+            formField.errors.descriptions = "Task Descriptions is required!"
+        }
+
+        if(!task.status) {
+            formField.errors.status = "Please choose one!"
+        }
+
+        if(!formField.hasAttachment) {
+            formField.errors.attachment = "Please choose an attachment!"
+        }
+    }
+
+    const chooseFile = (e) => {
+        var files = e.target.files;
+        if (files.length) {
+            formField.hasAttachment = true
+            formField.validated = true
+        } else {
+            formField.hasAttachment = false
+            formField.validated = false
+        }
+    }
 </script>
 
 <template>
     <h5>{{formLabel}}</h5>
 
-    <form @submit.prevent="insertTask" ref="taskForm">
+    <form
+        @submit.prevent="submitTask"
+        class="needs-validation"
+        :class="{ 'was-validated': formField.validated }"
+        novalidate
+    >
         <div class="mb-3">
             <label for="subject" class="form-label">Subject</label>
-            <input type="text" class="form-control" v-model="task.subject" name="subject" id="subject" placeholder="Enter Subject...">
+            <input
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': formField.errors.subject }"
+                v-model="task.subject"
+                name="subject"
+                id="subject"
+                placeholder="Enter Subject..."
+                required
+            >
+            <div
+                v-if="!task.subject"
+                class="invalid-feedback"
+            >{{ formField.errors.subject }}</div>
         </div>
          <div class="mb-3">
             <label for="task" class="form-label">Task Name</label>
-            <input type="text" class="form-control" v-model="task.task" id="task" name="task" placeholder="Enter Task Name...">
+            <input
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': formField.errors.task }"
+                v-model="task.task" id="task" name="task" placeholder="Enter Task Name..." required>
+            <div
+                v-if="!task.task"
+                class="invalid-feedback"
+            >{{ formField.errors.task }}</div >
         </div>
          <div class="mb-3">
             <label for="descriptions" class="form-label">Descriptions</label>
-            <textarea class="form-control" name="descriptions" v-model="task.descriptions" id="descriptions" rows="3" placeholder="Enter Task Descriptions..."></textarea>
+            <textarea
+                class="form-control"
+                :class="{ 'is-invalid': formField.errors.descriptions }"
+                name="descriptions"
+                v-model="task.descriptions"
+                id="descriptions"
+                rows="3"
+                placeholder="Enter Task Descriptions..."
+                required
+            ></textarea>
+            <div
+                v-if="!task.descriptions"
+                class="invalid-feedback"
+            >{{ formField.errors.descriptions }}</div >
         </div>
         <div class="mb-3">
             <label for="attachment" class="form-label">Attachment</label>
-            <input class="form-control" type="file" name="attachment" id="attachment" ref="fileInput">
+            <input
+                class="form-control"
+                type="file"
+                name="attachment"
+                id="attachment"
+                :class="{ 'is-invalid': formField.errors.attachment }"
+                @change="chooseFile"
+                required>
+            <div
+                v-if="!formField.hasAttachment"
+                class="invalid-feedback"
+            >{{ formField.errors.attachment }}</div >
         </div>
         <div class="mb-3">
             <label for="status" class="form-label">Task Status</label>
-            <select class="form-select" id="status" name="status" v-model="task.status">
+            <select class="form-select" id="status" name="status" v-model="task.status" :class="{ 'is-invalid': formField.errors.status }" required>
                 <option selected>Please Select Status...</option>
                 <option value="new">New</option>
                 <option value="inprogress">Inprogress</option>
                 <option value="completed">Completed</option>
             </select>
+            <div
+                v-if="!task.status"
+                class="invalid-feedback"
+            >{{ formField.errors.status }}</div >
         </div>
 
         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
