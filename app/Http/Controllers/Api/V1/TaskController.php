@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskResource;
 use App\Repositories\Task\TaskInterface;
+use App\Http\Requests\StoreTaskRequest;
 use App\Services\TaskService;
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
@@ -42,8 +43,9 @@ class TaskController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreTaskRequest $request)
     {
+        // dd($request->all());
         $requestData = (new TaskService())->uploadAttachment($request);
 
         if (!$requestData) {
@@ -85,7 +87,7 @@ class TaskController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, int $id)
+    public function update(StoreTaskRequest $request, int $id)
     {
         $request->request->remove('_method');
         $requestData = (new TaskService())->uploadAttachment($request);
